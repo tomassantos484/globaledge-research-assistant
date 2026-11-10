@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "GlobalEdge Brokerage Research Assistant"
+description = "A financial research assistant for brokerage teams to ask evidence-grounded questions across supplied historical news, SEC filings, and price records, with transparent citations and quality limitations."
+version = "1.0.0"
+id = "artifacts/globaledge-brokerage"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20114
+
+[services.development]
+run = "pnpm --filter @workspace/globaledge-brokerage run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/globaledge-brokerage", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/globaledge-brokerage/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20114"
+BASE_PATH = "/"
