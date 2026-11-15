@@ -14,7 +14,6 @@ import NotFound from "@/pages/not-found";
 import {
   useAskGlobalEdge,
   useGetResearchRuntimeStatus,
-  useHealthCheck,
 } from "@workspace/api-client-react";
 import type {
   ResearchResult,
@@ -35,10 +34,10 @@ import {
   RotateCw,
   ShieldCheck,
   SlidersHorizontal,
-  Sparkles,
-  Waves,
 } from "lucide-react";
-import { Route, Switch, useLocation, Router as WouterRouter } from "wouter";
+import { Link, useLocation, Router as WouterRouter } from "wouter";
+import { BrandHeader } from "@/components/brand-header";
+import DisclaimersPage from "@/pages/disclaimers";
 
 const queryClient = new QueryClient();
 
@@ -67,29 +66,6 @@ const SHORTCUTS = [
     label: "Netflix",
     prompt:
       "How has Netflix stock performed this year compared to news sentiment?",
-  },
-];
-
-const DEMO_SCENARIOS = [
-  {
-    label: "Sourced answer · no evaluation",
-    prompt: "Demo scenario: show a sourced answer with missing evaluation",
-  },
-  {
-    label: "Insufficient evidence",
-    prompt: "Demo scenario: show insufficient evidence",
-  },
-  {
-    label: "Blocked answer",
-    prompt: "Demo scenario: show a blocked answer",
-  },
-  {
-    label: "Upstream failure",
-    prompt: "Demo scenario: show an upstream error",
-  },
-  {
-    label: "Malformed response",
-    prompt: "Demo scenario: show a malformed response",
   },
 ];
 
@@ -307,88 +283,42 @@ function CitationText({
   );
 }
 
-function RuntimePanel({
+function RuntimeStatusBadge({
   verifiedLiveResponse,
 }: {
   verifiedLiveResponse: boolean;
 }) {
   const runtime = useGetResearchRuntimeStatus();
-  const health = useHealthCheck();
-  if (runtime.isLoading) {
-    return (
-      <div
-        className="runtime-panel"
-        data-testid="status-runtime-loading"
-        aria-live="polite"
-      >
-        <span className="status-dot status-dot-pending" />
-        <span>Checking research runtime…</span>
-      </div>
-    );
-  }
   const status = runtime.data;
   const configured = status?.researchWebhookConfigured ?? false;
   const fixture = status?.dataMode === "fixture";
-  const hasConfiguration = configured || fixture;
-  const healthText = health.isLoading
-    ? "Checking API"
-    : health.isError
-      ? "API status unavailable"
-      : "API reachable";
+  const label = runtime.isLoading
+    ? "Checking mode"
+    : runtime.isError
+      ? "Research mode unknown"
+      : fixture
+        ? "Sample mode"
+        : verifiedLiveResponse
+          ? "Live response received"
+          : configured
+            ? "Live configured · not verified"
+            : "Live not configured";
+  const detail = fixture
+    ? "Sample fixtures demonstrate the interface; they are not actual company research."
+    : configured
+      ? "Configuration is present, but webhook reachability is not verified until a live response is received."
+      : "The live research webhook is not configured.";
   return (
-    <div className="runtime-wrap">
-      <div
-        className="runtime-panel"
-        data-testid="status-runtime"
-        aria-live="polite"
-      >
-        <span
-          className={`status-dot ${hasConfiguration && !runtime.isError ? "status-dot-ready" : "status-dot-pending"}`}
-        />
-        <span className="runtime-label">
-          {runtime.isError
-            ? "Research status unavailable"
-            : fixture
-              ? "Demo fixtures active"
-              : configured
-                ? "Research configured"
-                : "Research not configured"}
-        </span>
-        <span className="runtime-divider" />
-        <span>{healthText}</span>
-        <span className="runtime-divider" />
-        <span>
-          {verifiedLiveResponse
-            ? "Live research response received"
-            : status?.researchReachability === "configured_not_verified"
-              ? "Connection not verified"
-              : status?.connectionTestConfigured
-                ? "Reachability not verified"
-                : "Connection test unavailable"}
-        </span>
-      </div>
-      {runtime.isError && (
-        <p className="runtime-note" data-testid="text-runtime-error">
-          Runtime status could not be loaded. Live research availability is
-          unknown.
-        </p>
-      )}
-      {!runtime.isError && status && !hasConfiguration && (
-        <p className="runtime-note" data-testid="text-missing-configuration">
-          Research is unavailable because this runtime has no configured
-          research transport.
-        </p>
-      )}
-      {fixture && (
-        <p
-          className="runtime-note fixture-note"
-          data-testid="text-fixture-mode"
-        >
-          Demo-state fixtures are active. Fixture responses are labeled
-          separately from live responses; failed live calls never fall back to
-          fixtures.
-        </p>
-      )}
+    <div
+      className="runtime-compact"
+      data-testid="status-runtime"
+      aria-live="polite"
+      title={detail}
+    >
+      <span
+        className={`status-dot ${fixture || runtime.isError ? "status-dot-pending" : "status-dot-ready"}`}
+      />
+      <span>{label}</span>
     </div>
   );
 }
@@ -696,27 +626,7 @@ function ResearchWorkspace() {
 
   return (
     <div className="ge-shell">
-      <header className="ge-topbar">
-        <div className="topbar-inner">
-          <div className="brand-lockup">
-            <div className="brand-mark" aria-hidden="true">
-              <Waves size={21} strokeWidth={1.8} />
-            </div>
-            <div>
-              <div className="ge-wordmark">GlobalEdge Brokerage</div>
-              <div className="brand-subtitle">Research Assistant</div>
-            </div>
-            <span className="proof-label">Proof of Concept</span>
-          </div>
-          <div className="topbar-right">
-            <span className="topbar-context">Research workspace</span>
-            <span className="topbar-rule" />
-            <span className="topbar-doc">
-              <FileText size={15} /> Historical evidence
-            </span>
-          </div>
-        </div>
-      </header>
+      <BrandHeader activePage="research" />
 
       <main className="workspace">
         <section className="intro-row">
@@ -732,17 +642,8 @@ function ResearchWorkspace() {
               Ask a focused question. Review the sources behind every response.
             </p>
           </div>
-          <RuntimePanel verifiedLiveResponse={result?.mode === "live"} />
+          <RuntimeStatusBadge verifiedLiveResponse={result?.mode === "live"} />
         </section>
-
-        <aside className="scope-notice" data-testid="notice-research-scope">
-          <ShieldCheck size={18} aria-hidden="true" />
-          <p>
-            Research uses the supplied historical datasets. It is not a live
-            market feed.
-          </p>
-          <span className="scope-label">SCOPE</span>
-        </aside>
 
         <section
           className="question-section"
@@ -755,7 +656,6 @@ function ResearchWorkspace() {
                 What would you like to research?
               </h2>
             </div>
-            <span className="section-aside">Use supplied evidence only</span>
           </div>
           <div className="composer ge-card">
             <label htmlFor="research-question" className="composer-label">
@@ -842,506 +742,421 @@ function ResearchWorkspace() {
               </button>
             ))}
           </div>
-          {isFixtureMode && (
-            <div
-              className="fixture-scenarios no-print"
-              data-testid="fixture-scenarios"
-            >
-              <div className="shortcut-heading">
-                <span className="ge-kicker">Fixture examples</span>
-                <span className="shortcut-note">
-                  Sample only. Select a scenario, then submit it separately.
-                </span>
-              </div>
-              <div
-                className="shortcut-list"
-                role="group"
-                aria-label="Sample response scenarios"
-              >
-                {DEMO_SCENARIOS.map((scenario) => (
-                  <button
-                    type="button"
-                    key={scenario.label}
-                    data-testid={`button-demo-${scenario.label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
-                    className="ge-shortcut fixture-shortcut"
-                    onClick={() => {
-                      setQuestion(scenario.prompt);
-                      setSelectedShortcut(null);
-                      setView({ kind: "empty" });
-                    }}
-                    disabled={loading}
-                  >
-                    {scenario.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </section>
 
-        <section
-          className="results-section"
-          aria-live="polite"
-          aria-atomic="false"
-        >
-          <div className="section-heading-row result-heading-row">
-            <div>
-              <p className="ge-kicker">02 / Review</p>
-              <h2 className="ge-heading">Research output</h2>
-            </div>
-            {result && (
-              <div className="result-actions no-print">
-                {answerVisible && (
+        {view.kind !== "empty" && (
+          <section
+            className="results-section"
+            aria-live="polite"
+            aria-atomic="false"
+          >
+            <div className="section-heading-row result-heading-row">
+              <div>
+                <p className="ge-kicker">02 / Review</p>
+                <h2 className="ge-heading">Research output</h2>
+              </div>
+              {result && (
+                <div className="result-actions no-print">
+                  {answerVisible && (
+                    <button
+                      className="quiet-action"
+                      data-testid="button-copy-answer"
+                      onClick={() => void copyResearchBrief()}
+                      type="button"
+                    >
+                      {copied ? <Check size={15} /> : <Copy size={15} />}
+                      {copied
+                        ? "Copied"
+                        : copyFailed
+                          ? "Copy unavailable"
+                          : "Copy research brief"}
+                    </button>
+                  )}
                   <button
                     className="quiet-action"
-                    data-testid="button-copy-answer"
-                    onClick={() => void copyResearchBrief()}
+                    data-testid="button-print"
+                    onClick={() => window.print()}
                     type="button"
                   >
-                    {copied ? <Check size={15} /> : <Copy size={15} />}
-                    {copied
-                      ? "Copied"
-                      : copyFailed
-                        ? "Copy unavailable"
-                        : "Copy research brief"}
+                    <Printer size={15} />
+                    Print
                   </button>
-                )}
-                <button
-                  className="quiet-action"
-                  data-testid="button-print"
-                  onClick={() => window.print()}
-                  type="button"
-                >
-                  <Printer size={15} />
-                  Print
-                </button>
-              </div>
-            )}
-          </div>
-
-          {view.kind === "empty" && (
-            <div className="empty-state ge-card" data-testid="state-empty">
-              <div className="empty-mark">
-                <Sparkles size={20} />
-              </div>
-              <div>
-                <h3>Your research will appear here.</h3>
-                <p>
-                  Submit a question to see the answer, cited evidence, and any
-                  important limitations together.
-                </p>
-              </div>
-              <span className="empty-index">READY</span>
-            </div>
-          )}
-
-          {!result && view.kind !== "loading" && (
-            <div className="quality-preview ge-card">
-              <button
-                type="button"
-                className="quality-toggle"
-                aria-expanded={qualityOpen}
-                onClick={() => setQualityOpen((open) => !open)}
-                data-testid="button-quality-accordion"
-              >
-                <span>
-                  <span className="ge-kicker">Quality review</span>
-                  <strong>
-                    Evaluation not implemented in the connected workflow
-                  </strong>
-                </span>
-                <ChevronDown
-                  size={16}
-                  className={qualityOpen ? "chevron-open" : ""}
-                />
-              </button>
-              {qualityOpen && (
-                <p className="quality-preview-copy" data-testid="panel-quality">
-                  No evaluator or evaluation-results table is implemented in the
-                  described workflow. Scores remain unavailable; none are
-                  inferred.
-                </p>
+                </div>
               )}
             </div>
-          )}
 
-          {view.kind === "loading" && (
-            <div
-              className="loading-state ge-card"
-              data-testid="state-loading"
-              aria-live="polite"
-            >
-              <div className="loading-head">
-                <div>
-                  <span className="ge-kicker">Research in progress</span>
-                  <h3>Reviewing the supplied evidence</h3>
-                </div>
-                <span className="elapsed">
-                  <Clock3 size={15} />
-                  {view.elapsed}s elapsed
-                </span>
-              </div>
-              <div className="skeleton-line ge-skeleton" />
-              <div className="skeleton-line skeleton-short ge-skeleton" />
-              <div className="loading-columns">
-                <div className="skeleton-panel ge-skeleton" />
-                <div className="skeleton-panel ge-skeleton" />
-              </div>
-              <p className="loading-question">
-                <span>Your question</span>
-                {question}
-              </p>
-            </div>
-          )}
-
-          {view.kind === "failure" && (
-            <div
-              className={`failure-state ge-card ${view.failure === "configuration" ? "failure-muted" : ""}`}
-              role="alert"
-              data-testid={`state-${view.failure}`}
-            >
-              <div className="failure-icon">
-                <AlertCircle size={19} />
-              </div>
-              <div className="failure-content">
-                <span className="ge-kicker">
-                  {view.sample
-                    ? FIXTURE_LABEL
-                    : view.failure === "configuration"
-                      ? "Availability"
-                      : "No answer returned"}
-                </span>
-                <h3>{failureTitle}</h3>
-                <p>{view.message}</p>
-                <p className="preserved-question">
-                  <strong>Question preserved:</strong> {question}
-                </p>
-                <div className="failure-meta">
-                  <span>Run reference</span>
-                  <code>{view.requestId || "Not sent"}</code>
-                </div>
-                {view.failure !== "configuration" && (
-                  <button
-                    type="button"
-                    className="quiet-action retry-action"
-                    onClick={() => void submitQuestion()}
-                    disabled={missingConfiguration || trimmedEmpty || tooLong}
-                  >
-                    <RotateCw size={14} />
-                    Retry this question
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {result && (
-            <>
+            {view.kind === "loading" && (
               <div
-                className={`result-banner ge-card ${view.kind === "answered" ? "result-banner-complete" : view.kind === "blocked" ? "result-banner-blocked" : "result-banner-caution"}`}
-                data-testid={`state-${view.kind}`}
+                className="loading-state ge-card"
+                data-testid="state-loading"
+                aria-live="polite"
               >
-                <div className="result-status-mark">
-                  {view.kind === "answered" ? (
-                    <Check size={17} />
-                  ) : view.kind === "blocked" ? (
-                    <ShieldCheck size={17} />
-                  ) : (
-                    <Info size={17} />
-                  )}
-                </div>
-                <div className="result-status-copy">
-                  <span className="ge-kicker">
-                    {view.kind === "answered"
-                      ? "Research complete"
-                      : view.kind === "blocked"
-                        ? "Response withheld"
-                        : "Evidence coverage"}
+                <div className="loading-head">
+                  <div>
+                    <span className="ge-kicker">Research in progress</span>
+                    <h3>Reviewing the supplied evidence</h3>
+                  </div>
+                  <span className="elapsed">
+                    <Clock3 size={15} />
+                    {view.elapsed}s elapsed
                   </span>
-                  <h3>
-                    {view.kind === "answered"
-                      ? "Evidence-linked response"
-                      : view.kind === "blocked"
-                        ? "This request was blocked by a guardrail."
-                        : "Insufficient evidence for a supported answer."}
-                  </h3>
-                  <p>
-                    {view.kind === "blocked"
-                      ? result.guardrails.safeMessage ||
-                        "No answer text is displayed for a blocked response."
-                      : view.kind === "insufficient"
-                        ? result.guardrails.safeMessage ||
-                          "The supplied records do not support a complete answer."
-                        : "Review the source records and limitations before sharing this response."}
-                  </p>
                 </div>
-                <div className="result-mode">
-                  <span
-                    className={`mode-pill ${result.mode === "fixture" ? "mode-fixture" : ""}`}
-                  >
-                    {result.mode === "fixture"
-                      ? "DEMO FIXTURE"
-                      : "LIVE RESPONSE"}
-                  </span>
-                  {result.mode === "fixture" && (
-                    <span className="mode-caption">
-                      Separate from live research
-                    </span>
-                  )}
+                <div className="skeleton-line ge-skeleton" />
+                <div className="skeleton-line skeleton-short ge-skeleton" />
+                <div className="loading-columns">
+                  <div className="skeleton-panel ge-skeleton" />
+                  <div className="skeleton-panel ge-skeleton" />
                 </div>
+                <p className="loading-question">
+                  <span>Your question</span>
+                  {question}
+                </p>
               </div>
+            )}
 
-              <div className="answer-layout">
-                <article className="answer-card ge-card">
-                  <div className="card-header">
-                    <div>
-                      <p className="ge-kicker">Response</p>
-                      <h3>
-                        {view.kind === "blocked"
-                          ? "No answer shown"
-                          : view.kind === "insufficient"
-                            ? "Evidence gap"
-                            : "Summary"}
-                      </h3>
-                    </div>
-                    <span className="card-header-icon">
-                      <FileText size={17} />
-                    </span>
-                  </div>
-                  {answerVisible ? (
-                    <div className="answer-body" data-testid="text-answer">
-                      <CitationText
-                        text={answerText}
-                        sources={result.sources}
-                        onSelect={focusSource}
-                      />
-                    </div>
-                  ) : (
-                    <p
-                      className="answer-placeholder"
-                      data-testid={
-                        view.kind === "blocked"
-                          ? "text-blocked-answer-hidden"
-                          : "text-insufficient-answer"
-                      }
-                    >
-                      {view.kind === "blocked"
-                        ? "Blocked answer content is intentionally not displayed."
-                        : result.answer ||
-                          "No answer was returned. The available evidence and limitations are listed below."}
-                    </p>
-                  )}
-                  {result.warnings.length > 0 && (
-                    <div className="warnings-box">
-                      <span className="ge-kicker">Important context</span>
-                      <ul>
-                        {result.warnings.map((warning, index) => (
-                          <li key={`${index}-${warning}`}>{warning}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  <div className="answer-footer">
-                    <div className="footer-meta">
-                      <span>Reference period</span>
-                      <strong>
-                        {result.referencePeriod || "Not provided"}
-                      </strong>
-                    </div>
-                    <div className="footer-meta">
-                      <span>Backend elapsed</span>
-                      <strong>
-                        {result.backendElapsedMs === null
-                          ? "Not reported"
-                          : `${result.backendElapsedMs} ms`}
-                      </strong>
-                    </div>
-                  </div>
-                </article>
-
-                <aside className="run-card ge-card">
-                  <div className="card-header">
-                    <div>
-                      <p className="ge-kicker">Run details</p>
-                      <h3>Trace & limits</h3>
-                    </div>
-                    <span className="card-header-icon">
-                      <SlidersHorizontal size={17} />
-                    </span>
-                  </div>
-                  <div className="run-reference">
+            {view.kind === "failure" && (
+              <div
+                className={`failure-state ge-card ${view.failure === "configuration" ? "failure-muted" : ""}`}
+                role="alert"
+                data-testid={`state-${view.failure}`}
+              >
+                <div className="failure-icon">
+                  <AlertCircle size={19} />
+                </div>
+                <div className="failure-content">
+                  <span className="ge-kicker">
+                    {view.sample
+                      ? FIXTURE_LABEL
+                      : view.failure === "configuration"
+                        ? "Availability"
+                        : "No answer returned"}
+                  </span>
+                  <h3>{failureTitle}</h3>
+                  <p>{view.message}</p>
+                  <p className="preserved-question">
+                    <strong>Question preserved:</strong> {question}
+                  </p>
+                  <div className="failure-meta">
                     <span>Run reference</span>
-                    <code>{result.runId || result.requestId}</code>
+                    <code>{view.requestId || "Not sent"}</code>
                   </div>
-                  <div className="guardrail-list">
-                    <div>
-                      <span>Input guardrail</span>
-                      <strong>
-                        {result.guardrails.input.replace("_", " ")}
-                      </strong>
-                    </div>
-                    <div>
-                      <span>Output guardrail</span>
-                      <strong>
-                        {result.guardrails.output.replace("_", " ")}
-                      </strong>
-                    </div>
-                    <div>
-                      <span>Evaluation storage</span>
-                      <strong>
-                        {result.evaluationStorageStatus.replaceAll("_", " ")}
-                      </strong>
-                    </div>
-                    {result.evaluation.verdict && (
-                      <div>
-                        <span>Evaluation verdict</span>
-                        <strong>{result.evaluation.verdict}</strong>
-                      </div>
-                    )}
-                  </div>
-                  <div className="limitations">
-                    <span className="ge-kicker">Limitations</span>
-                    <p>
-                      Historical datasets only. No current prices, future
-                      outcomes, or investment recommendations are provided.
-                    </p>
-                    {result.referencePeriod && (
-                      <p>Evidence period: {result.referencePeriod}.</p>
-                    )}
-                  </div>
-                  <div className="quality-control">
+                  {view.failure !== "configuration" && (
                     <button
                       type="button"
-                      className="quality-toggle"
-                      aria-expanded={qualityOpen}
-                      onClick={() => setQualityOpen((open) => !open)}
-                      data-testid="button-quality-accordion"
+                      className="quiet-action retry-action"
+                      onClick={() => void submitQuestion()}
+                      disabled={missingConfiguration || trimmedEmpty || tooLong}
                     >
-                      <span>
-                        <span className="ge-kicker">Quality review</span>
-                        <strong>
-                          {result.evaluation.status === "complete"
-                            ? "Evaluation available"
-                            : "Unavailable for this run"}
-                        </strong>
-                      </span>
-                      <ChevronDown
-                        size={16}
-                        className={qualityOpen ? "chevron-open" : ""}
-                      />
+                      <RotateCw size={14} />
+                      Retry this question
                     </button>
-                    {qualityOpen && (
-                      <div
-                        className="quality-content"
-                        data-testid="panel-quality"
-                      >
-                        {result.evaluation.status !== "complete" ? (
-                          <p>
-                            Quality metrics are not available for this run. No
-                            score is inferred.
-                          </p>
-                        ) : (
-                          <>
-                            {(
-                              [
-                                [
-                                  "Groundedness",
-                                  result.evaluation.groundedness,
-                                ],
-                                [
-                                  "Answer relevance",
-                                  result.evaluation.answerRelevance,
-                                ],
-                                [
-                                  "Context precision",
-                                  result.evaluation.contextPrecision,
-                                ],
-                              ] as [
-                                string,
-                                NonNullable<
-                                  typeof result.evaluation.overall
-                                > | null,
-                              ][]
-                            ).map(([label, value]) => (
-                              <div className="metric-row" key={label}>
-                                <span>{label}</span>
-                                <strong>
-                                  {value?.value ?? "Not reported"}
-                                  {value?.value !== null &&
-                                  value?.value !== undefined &&
-                                  value.scaleMin !== null &&
-                                  value.scaleMax !== null
-                                    ? ` / ${value.scaleMin}–${value.scaleMax}`
-                                    : ""}
-                                </strong>
-                                {value?.method && (
-                                  <small>Method: {value.method}</small>
-                                )}
-                                {value?.explanation && (
-                                  <small>{value.explanation}</small>
-                                )}
-                              </div>
-                            ))}
-                            {result.evaluation.judgeModel && (
-                              <p>
-                                Judge: {result.evaluation.judgeModel}
-                                {result.evaluation.rubricVersion
-                                  ? ` · Rubric ${result.evaluation.rubricVersion}`
-                                  : ""}
-                              </p>
-                            )}
-                          </>
-                        )}
-                      </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {result && (
+              <>
+                <div
+                  className={`result-banner ge-card ${view.kind === "answered" ? "result-banner-complete" : view.kind === "blocked" ? "result-banner-blocked" : "result-banner-caution"}`}
+                  data-testid={`state-${view.kind}`}
+                >
+                  <div className="result-status-mark">
+                    {view.kind === "answered" ? (
+                      <Check size={17} />
+                    ) : view.kind === "blocked" ? (
+                      <ShieldCheck size={17} />
+                    ) : (
+                      <Info size={17} />
                     )}
                   </div>
-                </aside>
-              </div>
-
-              <section
-                className="sources-section"
-                aria-labelledby="sources-heading"
-              >
-                <div className="sources-heading-row">
-                  <div>
-                    <p className="ge-kicker">03 / Evidence</p>
-                    <h2 className="ge-heading" id="sources-heading">
-                      Sources <span>{result.sources.length}</span>
-                    </h2>
+                  <div className="result-status-copy">
+                    <span className="ge-kicker">
+                      {view.kind === "answered"
+                        ? "Research complete"
+                        : view.kind === "blocked"
+                          ? "Response withheld"
+                          : "Evidence coverage"}
+                    </span>
+                    <h3>
+                      {view.kind === "answered"
+                        ? "Evidence-linked response"
+                        : view.kind === "blocked"
+                          ? "This request was blocked by a guardrail."
+                          : "Insufficient evidence for a supported answer."}
+                    </h3>
+                    <p>
+                      {view.kind === "blocked"
+                        ? result.guardrails.safeMessage ||
+                          "No answer text is displayed for a blocked response."
+                        : view.kind === "insufficient"
+                          ? result.guardrails.safeMessage ||
+                            "The supplied records do not support a complete answer."
+                          : "Review the source records and limitations before sharing this response."}
+                    </p>
                   </div>
-                  <p>Stable source IDs link this evidence to the response.</p>
+                  <div className="result-mode">
+                    <span
+                      className={`mode-pill ${result.mode === "fixture" ? "mode-fixture" : ""}`}
+                    >
+                      {result.mode === "fixture"
+                        ? "DEMO FIXTURE"
+                        : "LIVE RESPONSE"}
+                    </span>
+                    {result.mode === "fixture" && (
+                      <span className="mode-caption">
+                        Separate from live research
+                      </span>
+                    )}
+                  </div>
                 </div>
-                {result.sources.length ? (
-                  <div className="sources-grid">
-                    {result.sources.map((source, index) => (
-                      <SourceCard
-                        key={`${source.id}-${index}`}
-                        source={source}
-                        index={index}
-                        isSelected={selectedSourceId === source.id}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div
-                    className="sources-empty ge-card"
-                    data-testid="state-no-sources"
-                  >
-                    <Newspaper size={18} />
-                    <div>
-                      <strong>No source records returned</strong>
-                      <p>Source evidence was not included in this response.</p>
+
+                <div className="answer-layout">
+                  <article className="answer-card ge-card">
+                    <div className="card-header">
+                      <div>
+                        <p className="ge-kicker">Response</p>
+                        <h3>
+                          {view.kind === "blocked"
+                            ? "No answer shown"
+                            : view.kind === "insufficient"
+                              ? "Evidence gap"
+                              : "Summary"}
+                        </h3>
+                      </div>
+                      <span className="card-header-icon">
+                        <FileText size={17} />
+                      </span>
                     </div>
+                    {answerVisible ? (
+                      <div className="answer-body" data-testid="text-answer">
+                        <CitationText
+                          text={answerText}
+                          sources={result.sources}
+                          onSelect={focusSource}
+                        />
+                      </div>
+                    ) : (
+                      <p
+                        className="answer-placeholder"
+                        data-testid={
+                          view.kind === "blocked"
+                            ? "text-blocked-answer-hidden"
+                            : "text-insufficient-answer"
+                        }
+                      >
+                        {view.kind === "blocked"
+                          ? "Blocked answer content is intentionally not displayed."
+                          : result.answer ||
+                            "No answer was returned. The available evidence and limitations are listed below."}
+                      </p>
+                    )}
+                    {result.warnings.length > 0 && (
+                      <div className="warnings-box">
+                        <span className="ge-kicker">Important context</span>
+                        <ul>
+                          {result.warnings.map((warning, index) => (
+                            <li key={`${index}-${warning}`}>{warning}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    <div className="answer-footer">
+                      <div className="footer-meta">
+                        <span>Reference period</span>
+                        <strong>
+                          {result.referencePeriod || "Not provided"}
+                        </strong>
+                      </div>
+                      <div className="footer-meta">
+                        <span>Backend elapsed</span>
+                        <strong>
+                          {result.backendElapsedMs === null
+                            ? "Not reported"
+                            : `${result.backendElapsedMs} ms`}
+                        </strong>
+                      </div>
+                    </div>
+                  </article>
+
+                  <aside className="run-card ge-card">
+                    <div className="card-header">
+                      <div>
+                        <p className="ge-kicker">Run details</p>
+                        <h3>Run details</h3>
+                      </div>
+                      <span className="card-header-icon">
+                        <SlidersHorizontal size={17} />
+                      </span>
+                    </div>
+                    <div className="run-reference">
+                      <span>Run reference</span>
+                      <code>{result.runId || result.requestId}</code>
+                    </div>
+                    <div className="guardrail-list">
+                      <div>
+                        <span>Input guardrail</span>
+                        <strong>
+                          {result.guardrails.input.replace("_", " ")}
+                        </strong>
+                      </div>
+                      <div>
+                        <span>Output guardrail</span>
+                        <strong>
+                          {result.guardrails.output.replace("_", " ")}
+                        </strong>
+                      </div>
+                      <div>
+                        <span>Evaluation storage</span>
+                        <strong>
+                          {result.evaluationStorageStatus.replaceAll("_", " ")}
+                        </strong>
+                      </div>
+                      {result.evaluation.verdict && (
+                        <div>
+                          <span>Evaluation verdict</span>
+                          <strong>{result.evaluation.verdict}</strong>
+                        </div>
+                      )}
+                    </div>
+                    <div className="quality-control">
+                      <button
+                        type="button"
+                        className="quality-toggle"
+                        aria-expanded={qualityOpen}
+                        onClick={() => setQualityOpen((open) => !open)}
+                        data-testid="button-quality-accordion"
+                      >
+                        <span>
+                          <span className="ge-kicker">Quality review</span>
+                          <strong>
+                            {result.evaluation.status === "complete"
+                              ? "Evaluation available"
+                              : "Unavailable for this run"}
+                          </strong>
+                        </span>
+                        <ChevronDown
+                          size={16}
+                          className={qualityOpen ? "chevron-open" : ""}
+                        />
+                      </button>
+                      {qualityOpen && (
+                        <div
+                          className="quality-content"
+                          data-testid="panel-quality"
+                        >
+                          {result.evaluation.status !== "complete" ? (
+                            <p>
+                              Quality metrics are not available for this run. No
+                              score is inferred.
+                            </p>
+                          ) : (
+                            <>
+                              {(
+                                [
+                                  [
+                                    "Groundedness",
+                                    result.evaluation.groundedness,
+                                  ],
+                                  [
+                                    "Answer relevance",
+                                    result.evaluation.answerRelevance,
+                                  ],
+                                  [
+                                    "Context precision",
+                                    result.evaluation.contextPrecision,
+                                  ],
+                                ] as [
+                                  string,
+                                  NonNullable<
+                                    typeof result.evaluation.overall
+                                  > | null,
+                                ][]
+                              ).map(([label, value]) => (
+                                <div className="metric-row" key={label}>
+                                  <span>{label}</span>
+                                  <strong>
+                                    {value?.value ?? "Not reported"}
+                                    {value?.value !== null &&
+                                    value?.value !== undefined &&
+                                    value.scaleMin !== null &&
+                                    value.scaleMax !== null
+                                      ? ` / ${value.scaleMin}–${value.scaleMax}`
+                                      : ""}
+                                  </strong>
+                                  {value?.method && (
+                                    <small>Method: {value.method}</small>
+                                  )}
+                                  {value?.explanation && (
+                                    <small>{value.explanation}</small>
+                                  )}
+                                </div>
+                              ))}
+                              {result.evaluation.judgeModel && (
+                                <p>
+                                  Judge: {result.evaluation.judgeModel}
+                                  {result.evaluation.rubricVersion
+                                    ? ` · Rubric ${result.evaluation.rubricVersion}`
+                                    : ""}
+                                </p>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </aside>
+                </div>
+
+                <section
+                  className="sources-section"
+                  aria-labelledby="sources-heading"
+                >
+                  <div className="sources-heading-row">
+                    <div>
+                      <p className="ge-kicker">03 / Evidence</p>
+                      <h2 className="ge-heading" id="sources-heading">
+                        Sources <span>{result.sources.length}</span>
+                      </h2>
+                    </div>
+                    <p>Stable source IDs link this evidence to the response.</p>
                   </div>
-                )}
-              </section>
-            </>
-          )}
-        </section>
+                  {result.sources.length ? (
+                    <div className="sources-grid">
+                      {result.sources.map((source, index) => (
+                        <SourceCard
+                          key={`${source.id}-${index}`}
+                          source={source}
+                          index={index}
+                          isSelected={selectedSourceId === source.id}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div
+                      className="sources-empty ge-card"
+                      data-testid="state-no-sources"
+                    >
+                      <Newspaper size={18} />
+                      <div>
+                        <strong>No source records returned</strong>
+                        <p>
+                          Source evidence was not included in this response.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </section>
+              </>
+            )}
+          </section>
+        )}
 
         <footer className="workspace-footer">
-          <span>GLOBAL EDGE · RESEARCH WORKSPACE</span>
-          <span>Historical evidence. Clearly bounded.</span>
+          <span>GLOBAL EDGE · RESEARCH</span>
+          <Link href="/disclaimers" className="footer-disclaimer-link">
+            Disclaimers
+          </Link>
         </footer>
       </main>
     </div>
@@ -1353,14 +1168,17 @@ function Home() {
 }
 
 function Router() {
+  const [location] = useLocation();
+  const path = location.replace(/\/+$/, "") || "/";
+  const isResearchPage = path === "/";
+  const isDisclaimersPage = path === "/disclaimers";
   return (
-    // Keep a shared shell (sidebar, navbar) outside the boundary so it
-    // survives a page crash.
     <RoutedErrorBoundary>
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route component={NotFound} />
-      </Switch>
+      <div hidden={!isResearchPage} aria-hidden={!isResearchPage}>
+        <Home />
+      </div>
+      {isDisclaimersPage && <DisclaimersPage />}
+      {!isResearchPage && !isDisclaimersPage && <NotFound />}
     </RoutedErrorBoundary>
   );
 }
