@@ -4,6 +4,10 @@ import { Info, ShieldCheck } from "lucide-react";
 import { useGetResearchRuntimeStatus } from "@workspace/api-client-react";
 import { BrandHeader } from "@/components/brand-header";
 
+const pageTitle = "Disclaimers & Scope | GlobalEdge Brokerage Research";
+const pageDescription =
+  "Learn about GlobalEdge research scope, sample fixtures, live connection status, evidence limits, financial disclaimers, and prototype security.";
+
 export default function DisclaimersPage() {
   const runtime = useGetResearchRuntimeStatus();
   const status = runtime.data;
@@ -20,9 +24,29 @@ export default function DisclaimersPage() {
 
   useEffect(() => {
     const previousTitle = document.title;
-    document.title = "Disclaimers | GlobalEdge Brokerage Research Assistant";
+    const metadata = [
+      { selector: 'meta[name="description"]', content: pageDescription },
+      { selector: 'meta[property="og:title"]', content: pageTitle },
+      { selector: 'meta[property="og:description"]', content: pageDescription },
+      { selector: 'meta[name="twitter:title"]', content: pageTitle },
+      { selector: 'meta[name="twitter:description"]', content: pageDescription },
+    ];
+    const previousMetadata = metadata.map(({ selector }) => {
+      const element = document.querySelector<HTMLMetaElement>(selector);
+      return { element, content: element?.content ?? null };
+    });
+
+    document.title = pageTitle;
+    metadata.forEach(({ selector, content }) => {
+      const element = document.querySelector<HTMLMetaElement>(selector);
+      if (element) element.content = content;
+    });
+
     return () => {
       document.title = previousTitle;
+      previousMetadata.forEach(({ element, content }) => {
+        if (element && content !== null) element.content = content;
+      });
     };
   }, []);
 
@@ -143,13 +167,14 @@ export default function DisclaimersPage() {
           </article>
 
           <article className="disclaimer-card ge-card">
-            <span className="ge-kicker">Prototype and access</span>
-            <h2>Not production access control</h2>
+            <span className="ge-kicker">Prototype, release and security</span>
+            <h2>Not ready for public production use</h2>
             <p>
-              This prototype has no user sign-in. Its in-memory request limit is
-              not production-grade protection. Keep a live instance
-              access-restricted until suitable access controls and rate limiting
-              are configured.
+              This prototype has no user sign-in, and its in-memory request
+              limit is not production-grade protection. Do not release it as a
+              public live research service until suitable access controls and
+              rate limiting are configured. Treat all output as unverified
+              research.
             </p>
           </article>
         </section>

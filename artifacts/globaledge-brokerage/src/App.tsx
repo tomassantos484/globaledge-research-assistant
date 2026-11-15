@@ -295,9 +295,9 @@ function RuntimeStatusBadge({
   const label = runtime.isLoading
     ? "Checking mode"
     : runtime.isError
-      ? "Research mode unknown"
+      ? "Mode unavailable"
       : fixture
-        ? "Sample mode"
+        ? "Sample data only"
         : verifiedLiveResponse
           ? "Live response received"
           : configured
@@ -313,6 +313,7 @@ function RuntimeStatusBadge({
       className="runtime-compact"
       data-testid="status-runtime"
       aria-live="polite"
+      aria-label={`${label}. ${detail}`}
       title={detail}
     >
       <span
