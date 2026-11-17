@@ -1,1 +1,2 @@
 - [Primary research audience](research-audience.md) — Brokers researching historical evidence are the primary design audience.
+- [Narrow-screen verification](narrow-screen-verification.md) — Check available content width with classic scrollbars, not just the configured viewport.

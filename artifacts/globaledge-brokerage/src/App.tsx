@@ -555,7 +555,13 @@ function ResearchWorkspace() {
   const focusSource = (id: string) => {
     setSelectedSourceId(id);
     const source = document.getElementById(`source-${id}`);
-    source?.scrollIntoView({ behavior: "smooth", block: "center" });
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    source?.scrollIntoView({
+      behavior: reducedMotion ? "instant" : "smooth",
+      block: "center",
+    });
     source?.focus({ preventScroll: true });
   };
   const copyResearchBrief = async () => {
