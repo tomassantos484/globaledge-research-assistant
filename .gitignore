@@ -53,3 +53,6 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Impeccable machine-local overrides; keep shared product and live config tracked
+**/.impeccable/config.local.json
