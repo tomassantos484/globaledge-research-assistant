@@ -212,7 +212,7 @@ function getApiFailure(error: unknown) {
     message:
       payloadMessage ||
       rawMessage ||
-      "The research service could not be reached. Your question is preserved.",
+      "Could not reach the research service. Your question is still in the text box. Try again.",
   };
 }
 
@@ -295,19 +295,19 @@ function RuntimeStatusBadge({
   const label = runtime.isLoading
     ? "Checking mode"
     : runtime.isError
-      ? "Research mode unknown"
+      ? "Mode unavailable"
       : fixture
         ? "Sample mode"
         : verifiedLiveResponse
           ? "Live response received"
           : configured
-            ? "Live configured · not verified"
-            : "Live not configured";
+            ? "Connection set up · not checked"
+            : "Research connection not set up";
   const detail = fixture
-    ? "Sample fixtures demonstrate the interface; they are not actual company research."
+    ? "Sample responses show how the interface works. They are not actual company research."
     : configured
-      ? "Configuration is present, but webhook reachability is not verified until a live response is received."
-      : "The live research webhook is not configured.";
+      ? "The research connection is set up. A valid response is needed to confirm that it works. Research uses historical data, not a live market feed."
+      : "The research service connection has not been set up.";
   return (
     <div
       className="runtime-compact"
@@ -392,7 +392,7 @@ function SourceCard({
       {source.excerpt && <blockquote>{source.excerpt}</blockquote>}
       {absent.length > 0 && (
         <p className="missing-meta">
-          <Info size={13} aria-hidden="true" /> Metadata not provided:{" "}
+          <Info size={13} aria-hidden="true" /> Missing source details:{" "}
           {absent.join(", ")}.
         </p>
       )}
@@ -408,7 +408,7 @@ function SourceCard({
           </a>
         ) : (
           <p className="missing-meta">
-            Source URL is present but is not a safe HTTP(S) link.
+            This source link cannot be opened because it is not a valid HTTP or HTTPS address.
           </p>
         ))}
     </article>
@@ -463,7 +463,7 @@ function ResearchWorkspace() {
         kind: "failure",
         failure: "configuration",
         message:
-          "This runtime has no configured research transport. Your question has not been sent.",
+          "The research connection has not been set up. Your question has not been sent.",
         requestId: null,
       });
       return;
@@ -484,7 +484,7 @@ function ResearchWorkspace() {
               kind: "failure",
               failure: "invalid",
               message:
-                "The research service returned a response that did not match this request. Your question is preserved.",
+                "The research service returned a response that did not match this question. Your question is still in the text box. Try again.",
               requestId,
             });
             return;
@@ -501,7 +501,7 @@ function ResearchWorkspace() {
           } else {
             const message =
               result.error?.safeMessage ||
-              "The research service could not complete this request. Your question is preserved.";
+              "The research service could not answer this question. Your question is still in the text box. Try again.";
             setView({
               kind: "failure",
               failure: "upstream",
@@ -620,11 +620,11 @@ function ResearchWorkspace() {
     view.kind === "failure"
       ? view.sample
         ? view.failure === "invalid"
-          ? "Sample malformed-response fixture"
-          : "Sample upstream-failure fixture"
+          ? "Sample response error"
+          : "Sample service error"
         : {
             configuration: "Research is not configured",
-            invalid: "Response could not be validated",
+            invalid: "Could not verify the response",
             timeout: "Request timed out",
             upstream: "Research request failed",
           }[view.failure]
@@ -638,14 +638,15 @@ function ResearchWorkspace() {
         <section className="intro-row">
           <div>
             <p className="ge-kicker intro-kicker">
-              Broker research · Evidence first
+              Historical financial research
             </p>
             <h1 className="ge-heading">
-              A clearer view
-              <br className="mobile-break" /> of the evidence.
+              Research historical
+              <br className="mobile-break" /> financial records.
             </h1>
             <p className="intro-copy">
-              Ask a focused question. Review the sources behind every response.
+              Ask about SEC filings, news, or price records. Check the sources
+              returned with the answer.
             </p>
           </div>
           <RuntimeStatusBadge verifiedLiveResponse={result?.mode === "live"} />
@@ -682,7 +683,7 @@ function ResearchWorkspace() {
             />
             <div className="composer-footer">
               <p id="question-help" className="composer-hint">
-                A specific question makes the evidence easier to assess.{" "}
+                Include a company, topic, and date range.{" "}
                 <span>Ctrl / ⌘ + Enter to submit</span>
               </p>
               <div className="composer-actions">
@@ -725,7 +726,7 @@ function ResearchWorkspace() {
           <div className="shortcut-heading">
             <span className="ge-kicker">Start with a sample</span>
             <span className="shortcut-note">
-              Selecting fills the question only — it does not submit.
+              Choose a sample to fill the text box, then select Ask GlobalEdge.
             </span>
           </div>
           <div
@@ -800,7 +801,7 @@ function ResearchWorkspace() {
                 <div className="loading-head">
                   <div>
                     <span className="ge-kicker">Research in progress</span>
-                    <h3>Reviewing the supplied evidence</h3>
+                    <h3>Waiting for a research response</h3>
                   </div>
                   <span className="elapsed">
                     <Clock3 size={15} />
@@ -840,7 +841,7 @@ function ResearchWorkspace() {
                   <h3>{failureTitle}</h3>
                   <p>{view.message}</p>
                   <p className="preserved-question">
-                    <strong>Question preserved:</strong> {question}
+                    <strong>Your question:</strong> {question}
                   </p>
                   <div className="failure-meta">
                     <span>Run reference</span>
@@ -882,14 +883,14 @@ function ResearchWorkspace() {
                         ? "Research complete"
                         : view.kind === "blocked"
                           ? "Response withheld"
-                          : "Evidence coverage"}
+                          : "Not enough evidence"}
                     </span>
                     <h3>
                       {view.kind === "answered"
-                        ? "Evidence-linked response"
+                        ? "Response ready"
                         : view.kind === "blocked"
                           ? "This request was blocked by a guardrail."
-                          : "Insufficient evidence for a supported answer."}
+                          : "The records do not support a full answer."}
                     </h3>
                     <p>
                       {view.kind === "blocked"
@@ -906,12 +907,12 @@ function ResearchWorkspace() {
                       className={`mode-pill ${result.mode === "fixture" ? "mode-fixture" : ""}`}
                     >
                       {result.mode === "fixture"
-                        ? "DEMO FIXTURE"
+                        ? "SAMPLE RESPONSE"
                         : "LIVE RESPONSE"}
                     </span>
                     {result.mode === "fixture" && (
                       <span className="mode-caption">
-                        Separate from live research
+                        Not actual research
                       </span>
                     )}
                   </div>
@@ -952,7 +953,7 @@ function ResearchWorkspace() {
                         }
                       >
                         {view.kind === "blocked"
-                          ? "Blocked answer content is intentionally not displayed."
+                            ? "The answer is hidden because a guardrail blocked it."
                           : result.answer ||
                             "No answer was returned. The available evidence and limitations are listed below."}
                       </p>
@@ -975,7 +976,7 @@ function ResearchWorkspace() {
                         </strong>
                       </div>
                       <div className="footer-meta">
-                        <span>Backend elapsed</span>
+                        <span>Service response time</span>
                         <strong>
                           {result.backendElapsedMs === null
                             ? "Not reported"
@@ -988,7 +989,7 @@ function ResearchWorkspace() {
                   <aside className="run-card ge-card">
                     <div className="card-header">
                       <div>
-                        <p className="ge-kicker">Run details</p>
+                        <p className="ge-kicker">Research request</p>
                         <h3>Run details</h3>
                       </div>
                       <span className="card-header-icon">
@@ -1053,8 +1054,7 @@ function ResearchWorkspace() {
                         >
                           {result.evaluation.status !== "complete" ? (
                             <p>
-                              Quality metrics are not available for this run. No
-                              score is inferred.
+                              No quality scores were returned for this request.
                             </p>
                           ) : (
                             <>
@@ -1125,7 +1125,7 @@ function ResearchWorkspace() {
                         Sources <span>{result.sources.length}</span>
                       </h2>
                     </div>
-                    <p>Stable source IDs link this evidence to the response.</p>
+                    <p>Select a citation in the answer to view its source.</p>
                   </div>
                   {result.sources.length ? (
                     <div className="sources-grid">

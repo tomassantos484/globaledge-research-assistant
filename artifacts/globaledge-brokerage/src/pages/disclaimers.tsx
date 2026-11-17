@@ -13,7 +13,7 @@ export default function DisclaimersPage() {
     : runtime.isLoading
       ? "Checking configuration"
       : fixtureMode
-        ? "Sample fixtures active"
+        ? "Sample responses active"
         : status?.researchWebhookConfigured
           ? "Configured, not verified"
           : "Not configured";
@@ -34,8 +34,7 @@ export default function DisclaimersPage() {
           <p className="ge-kicker">Project information</p>
           <h1 className="ge-heading">Disclaimers &amp; research scope</h1>
           <p>
-            What this proof of concept uses, what it reports, and what it does
-            not do.
+            Data sources, response checks, and limits of this prototype.
           </p>
         </section>
 
@@ -61,51 +60,52 @@ export default function DisclaimersPage() {
             <span className="ge-kicker">What the assistant does</span>
             <h2>Research from supplied evidence</h2>
             <p>
-              It is designed to answer focused questions using historical SEC
+              The assistant is designed to answer questions using historical SEC
               filings, news, and price records supplied to its research
-              workflow. Source IDs connect a response to the records returned
-              with it.
+              workflow. Citations link answers to the source records returned
+              with them.
             </p>
           </article>
 
           <article className="disclaimer-card ge-card">
-            <span className="ge-kicker">Current runtime</span>
+            <span className="ge-kicker">Research connection</span>
             <h2>{researchStatus}</h2>
             {runtime.isLoading ? (
-              <p>Checking research runtime configuration.</p>
+              <p>Checking the research connection settings.</p>
             ) : runtime.isError ? (
               <p>
-                The application could not read its runtime configuration, so
-                live availability is unknown.
+                The app could not read its connection settings. It cannot
+                confirm whether the research service is available.
               </p>
             ) : fixtureMode ? (
               <p>
-                This workspace is currently in fixture mode. Its sample
-                responses are interface demonstrations, not actual company
+                This app is showing sample responses to demonstrate the
+                interface. They are not actual company
                 research or market data. No actual historical research dataset
                 was supplied with this first build.
               </p>
             ) : status?.researchWebhookConfigured ? (
               <p>
-                The research webhook is configured, but this status does not
-                verify that it is reachable. Reachability is confirmed only
-                after a valid live research response is received.
+                The research connection is set up, but that does not confirm
+                that the service can be reached. A valid research response is
+                needed to confirm that it works. This connection does not
+                provide a live market feed.
               </p>
             ) : (
               <p>
-                Live research is not configured. A question is not sent to a
-                research workflow until its server-side connection is set up.
+                The research connection has not been set up. Questions cannot
+                be sent to the research service until it is connected.
               </p>
             )}
             <p>
               {runtime.isError
                 ? "Connection-test status is unknown."
                 : runtime.isLoading
-                  ? "Connection-test configuration is being checked."
+                  ? "Checking the separate connection-test settings."
                   : status?.connectionTestConfigured
-                    ? "A separate connection-test endpoint is configured, but that does not prove the research endpoint is reachable."
-                    : "A separate connection-test endpoint is not configured."}{" "}
-              Live failures never fall back to fixture responses.
+                    ? "A separate connection test is set up, but it does not confirm that research requests will work."
+                    : "A separate connection test has not been set up."}{" "}
+              If a research request fails, the app does not replace it with a sample response.
             </p>
           </article>
 
@@ -114,20 +114,19 @@ export default function DisclaimersPage() {
             <h2>Review the source records</h2>
             <p>
               Dates, publishers, excerpts, and reference periods depend on the
-              supplied records. Missing details are identified as unavailable
-              rather than inferred. Historical evidence cannot establish current
+              supplied records. Missing details are marked as unavailable,
+              not filled in. Historical evidence cannot establish current
               prices or future outcomes.
             </p>
           </article>
 
           <article className="disclaimer-card ge-card">
             <span className="ge-kicker">Evaluation and guardrails</span>
-            <h2>No scores are invented</h2>
+            <h2>Quality scores are unavailable</h2>
             <p>
-              The described workflow does not implement an evaluator or
-              evaluation-results storage. Scores remain unavailable. Guardrail
-              checks are shown as passed or blocked only when the workflow
-              explicitly reports them.
+              The described workflow does not calculate or store quality
+              scores. Guardrails check requests and responses; their results
+              appear as passed or blocked only when the workflow reports them.
             </p>
           </article>
 
@@ -144,7 +143,7 @@ export default function DisclaimersPage() {
 
           <article className="disclaimer-card ge-card">
             <span className="ge-kicker">Prototype and access</span>
-            <h2>Not production access control</h2>
+            <h2>Access restrictions are needed</h2>
             <p>
               This prototype has no user sign-in. Its in-memory request limit is
               not production-grade protection. Keep a live instance
@@ -158,7 +157,7 @@ export default function DisclaimersPage() {
           <Info size={15} aria-hidden="true" />
           <span>
             Sample data is labeled “Sample data - interface demonstration only.”
-            wherever a fixture response appears.
+            wherever a sample response appears.
           </span>
         </p>
 

@@ -40,11 +40,11 @@ function DefaultFallback({ error, resetError }: ErrorFallbackProps) {
     <div className="ge-shell min-h-screen w-full flex items-center justify-center bg-background p-6">
       <div className="max-w-lg w-full text-center">
         <h1 className="text-xl font-semibold text-foreground">
-          Something went wrong
+          This page could not be displayed
         </h1>
         <p className="mt-2 text-sm text-foreground">
-          This part of the app hit an error. The rest of the app is still
-          running.
+          Try again to reopen this page. If the error continues, reload the
+          browser tab. Reloading will clear any question or result on this page.
         </p>
         {/* Dev only: messages can carry API responses and other internals. */}
         {import.meta.env.DEV ? (

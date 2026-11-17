@@ -9,12 +9,13 @@ export default function NotFound() {
           <div className="flex mb-4 gap-2">
             <AlertCircle className="h-8 w-8 text-primary" />
             <h1 className="text-2xl font-bold text-foreground">
-              404 Page Not Found
+              Page not found
             </h1>
           </div>
 
           <p className="mt-4 text-sm text-foreground">
-            Did you forget to add the page to the router?
+            This address does not match a page in GlobalEdge. Use your
+            browser’s Back button to return to the previous page.
           </p>
         </CardContent>
       </Card>
