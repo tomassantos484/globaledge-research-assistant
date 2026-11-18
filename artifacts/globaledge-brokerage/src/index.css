@@ -523,7 +523,7 @@ summary:focus-visible {
   color: var(--ge-dark-gray);
 }
 .scope-label {
-  color: var(--ge-medium-gray);
+  color: var(--ge-dark-gray);
   font: 500 0.75rem/1.5 var(--app-font-mono);
   letter-spacing: 0.09em;
 }
@@ -1173,7 +1173,7 @@ summary:focus-visible {
   color: var(--ge-near-black);
 }
 .metric-row small {
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   grid-column: 1/-1;
   color: var(--ge-medium-gray);
 }
