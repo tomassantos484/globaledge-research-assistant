@@ -303,11 +303,17 @@ function RuntimeStatusBadge({
           : configured
             ? "Connection set up · not checked"
             : "Research connection not set up";
-  const detail = fixture
-    ? "Sample responses show how the interface works. They are not actual company research."
-    : configured
-      ? "The research connection is set up. A valid response is needed to confirm that it works. Research uses historical data, not a live market feed."
-      : "The research service connection has not been set up.";
+  const detail = runtime.isLoading
+    ? "Checking whether the app uses sample responses or the research service."
+    : runtime.isError
+      ? "The app couldn't check its connection settings. The research service may or may not be available."
+      : fixture
+        ? "Sample responses show how the interface works; they aren't actual company research."
+        : verifiedLiveResponse
+          ? "The research service returned a valid response using historical records, not a live market feed."
+          : configured
+            ? "The research connection is set up, but the app needs a valid response to confirm it works. It isn't a live market feed."
+            : "The research service connection hasn't been set up.";
   return (
     <div
       className="runtime-compact"
@@ -645,8 +651,8 @@ function ResearchWorkspace() {
               <br className="mobile-break" /> financial records.
             </h1>
             <p className="intro-copy">
-              Ask about SEC filings, news, or price records. Check the sources
-              returned with the answer.
+              Ask about historical SEC filings, news, or price records, then
+              check the sources returned with the answer.
             </p>
           </div>
           <RuntimeStatusBadge verifiedLiveResponse={result?.mode === "live"} />
@@ -890,7 +896,7 @@ function ResearchWorkspace() {
                         ? "Response ready"
                         : view.kind === "blocked"
                           ? "This request was blocked by a guardrail."
-                          : "The records do not support a full answer."}
+                          : "The records don't support a full answer."}
                     </h3>
                     <p>
                       {view.kind === "blocked"
@@ -898,7 +904,7 @@ function ResearchWorkspace() {
                           "No answer text is displayed for a blocked response."
                         : view.kind === "insufficient"
                           ? result.guardrails.safeMessage ||
-                            "The supplied records do not support a complete answer."
+                            "The supplied records don't support a complete answer."
                           : "Review the source records and limitations before sharing this response."}
                     </p>
                   </div>
@@ -1014,7 +1020,7 @@ function ResearchWorkspace() {
                         </strong>
                       </div>
                       <div>
-                        <span>Evaluation storage</span>
+                        <span>Saved quality scores</span>
                         <strong>
                           {result.evaluationStorageStatus.replaceAll("_", " ")}
                         </strong>
@@ -1054,7 +1060,7 @@ function ResearchWorkspace() {
                         >
                           {result.evaluation.status !== "complete" ? (
                             <p>
-                              No quality scores were returned for this request.
+                              The service didn't return a completed quality review.
                             </p>
                           ) : (
                             <>

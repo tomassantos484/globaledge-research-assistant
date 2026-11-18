@@ -40,7 +40,7 @@ function DefaultFallback({ error, resetError }: ErrorFallbackProps) {
     <div className="ge-shell min-h-screen w-full flex items-center justify-center bg-background p-6">
       <div className="max-w-lg w-full text-center">
         <h1 className="text-xl font-semibold text-foreground">
-          This page could not be displayed
+          We couldn't display this page
         </h1>
         <p className="mt-2 text-sm text-foreground">
           Try again to reopen this page. If the error continues, reload the

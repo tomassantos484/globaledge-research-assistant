@@ -14,7 +14,7 @@ export default function NotFound() {
           </div>
 
           <p className="mt-4 text-sm text-foreground">
-            This address does not match a page in GlobalEdge. Use your
+            This address doesn't match a page in GlobalEdge. Use your
             browser’s Back button to return to the previous page.
           </p>
         </CardContent>

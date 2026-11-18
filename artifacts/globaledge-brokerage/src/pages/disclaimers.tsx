@@ -15,8 +15,8 @@ export default function DisclaimersPage() {
       : fixtureMode
         ? "Sample responses active"
         : status?.researchWebhookConfigured
-          ? "Configured, not verified"
-          : "Not configured";
+          ? "Connection set up, not checked"
+          : "Connection not set up";
 
   useEffect(() => {
     const previousTitle = document.title;
@@ -34,7 +34,7 @@ export default function DisclaimersPage() {
           <p className="ge-kicker">Project information</p>
           <h1 className="ge-heading">Disclaimers &amp; research scope</h1>
           <p>
-            Data sources, response checks, and limits of this prototype.
+            What the assistant can answer and where its limits apply.
           </p>
         </section>
 
@@ -60,10 +60,9 @@ export default function DisclaimersPage() {
             <span className="ge-kicker">What the assistant does</span>
             <h2>Research from supplied evidence</h2>
             <p>
-              The assistant is designed to answer questions using historical SEC
-              filings, news, and price records supplied to its research
-              workflow. Citations link answers to the source records returned
-              with them.
+              Ask questions about historical SEC filings, news, or price records
+              supplied to the research workflow. When the workflow returns
+              citations, you can follow them to the source details.
             </p>
           </article>
 
@@ -74,27 +73,25 @@ export default function DisclaimersPage() {
               <p>Checking the research connection settings.</p>
             ) : runtime.isError ? (
               <p>
-                The app could not read its connection settings. It cannot
+                The app couldn't read its connection settings, so it can't
                 confirm whether the research service is available.
               </p>
             ) : fixtureMode ? (
               <p>
-                This app is showing sample responses to demonstrate the
-                interface. They are not actual company
-                research or market data. No actual historical research dataset
-                was supplied with this first build.
+                You're viewing sample responses that show how the interface
+                works, not actual company research or market data. The first
+                build didn't include a historical research dataset.
               </p>
             ) : status?.researchWebhookConfigured ? (
               <p>
-                The research connection is set up, but that does not confirm
-                that the service can be reached. A valid research response is
-                needed to confirm that it works. This connection does not
-                provide a live market feed.
+                The research connection is set up, but the app needs a valid
+                response to confirm that the service works. A working
+                connection still uses historical records, not a live market feed.
               </p>
             ) : (
               <p>
-                The research connection has not been set up. Questions cannot
-                be sent to the research service until it is connected.
+                The app can't send questions to the research service until its
+                connection is set up.
               </p>
             )}
             <p>
@@ -103,9 +100,9 @@ export default function DisclaimersPage() {
                 : runtime.isLoading
                   ? "Checking the separate connection-test settings."
                   : status?.connectionTestConfigured
-                    ? "A separate connection test is set up, but it does not confirm that research requests will work."
-                    : "A separate connection test has not been set up."}{" "}
-              If a research request fails, the app does not replace it with a sample response.
+                    ? "A separate connection test is set up, but it doesn't confirm that research requests will work."
+                    : "A separate connection test hasn't been set up."}{" "}
+              If a research request fails, the app won't replace it with a sample response.
             </p>
           </article>
 
@@ -114,19 +111,19 @@ export default function DisclaimersPage() {
             <h2>Review the source records</h2>
             <p>
               Dates, publishers, excerpts, and reference periods depend on the
-              supplied records. Missing details are marked as unavailable,
-              not filled in. Historical evidence cannot establish current
-              prices or future outcomes.
+              supplied records. The app marks missing details as unavailable
+              rather than filling them in; historical evidence can't establish
+              current prices or future outcomes.
             </p>
           </article>
 
           <article className="disclaimer-card ge-card">
             <span className="ge-kicker">Evaluation and guardrails</span>
-            <h2>Quality scores are unavailable</h2>
+            <h2>Quality scores unavailable</h2>
             <p>
-              The described workflow does not calculate or store quality
-              scores. Guardrails check requests and responses; their results
-              appear as passed or blocked only when the workflow reports them.
+              The described workflow doesn't calculate or store quality
+              scores. The app shows a guardrail as passed or blocked only when
+              the workflow reports that result.
             </p>
           </article>
 
@@ -145,10 +142,10 @@ export default function DisclaimersPage() {
             <span className="ge-kicker">Prototype and access</span>
             <h2>Access restrictions are needed</h2>
             <p>
-              This prototype has no user sign-in. Its in-memory request limit is
-              not production-grade protection. Keep a live instance
-              access-restricted until suitable access controls and rate limiting
-              are configured.
+              This prototype has no sign-in, and its temporary request limit
+              isn't enough to protect a public service. Restrict access to any
+              connected instance until suitable access controls and rate
+              limiting are in place.
             </p>
           </article>
         </section>
@@ -156,8 +153,8 @@ export default function DisclaimersPage() {
         <p className="disclaimer-footnote">
           <Info size={15} aria-hidden="true" />
           <span>
-            Sample data is labeled “Sample data - interface demonstration only.”
-            wherever a sample response appears.
+            Look for “Sample data - interface demonstration only.” on sample
+            responses.
           </span>
         </p>
 
